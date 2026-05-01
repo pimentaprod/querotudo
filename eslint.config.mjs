@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Usamos <img> intencionalmente apontando ao Cloudinary para evitar
+    // consumo de Image Optimizations da Vercel (decisão arquitetural — ver CLAUDE.md)
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
