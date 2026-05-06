@@ -12,6 +12,13 @@ body {
   color: #111827;
 }
 
+/* Elimina o tap delay de 300ms e melhora a responsividade ao toque no Android */
+button, a {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Scrollbar invisível — usado nos chips de categoria em mobile */
 .scrollbar-hide {
   -ms-overflow-style: none;

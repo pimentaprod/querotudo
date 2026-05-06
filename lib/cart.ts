@@ -66,26 +66,34 @@ export const useCart = create<CartStore>()(
 
 /**
  * Retorna true assim que o Zustand terminar de reidratar do localStorage.
- * setState está dentro de um callback (onFinishHydration), não no corpo do
- * efeito — padrão aceito pela regra react-hooks/set-state-in-effect.
- */
-/**
- * Retorna true assim que o Zustand terminar de reidratar do localStorage.
  * Durante SSR retorna false imediatamente (localStorage não existe no servidor).
- * setState está dentro do callback onFinishHydration, não no corpo do efeito —
- * padrão aceito pela regra react-hooks/set-state-in-effect.
  */
 export function useCartHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(() => {
-    // No servidor localStorage não existe — persist ainda não inicializou
-    if (typeof window === 'undefined') return false;
-    return useCart.persist.hasHydrated();
-  });
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (useCart.persist.hasHydrated()) return;
-    const unsubscribe = useCart.persist.onFinishHydration(() => setHydrated(true));
-    return unsubscribe;
+    // Verifica se já está hidratado (caso o rehydrate já tenha sido chamado antes)
+    if (useCart.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+
+    // Listener para quando a hidratação terminar
+    const unsubFinish = useCart.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+
+    // Inicia a hidratação manual
+    try {
+      useCart.persist.rehydrate();
+    } catch (e) {
+      console.error('Erro ao reidratar carrinho:', e);
+      setHydrated(true); // Força true para não travar a UI
+    }
+
+    return () => {
+      unsubFinish();
+    };
   }, []);
 
   return hydrated;

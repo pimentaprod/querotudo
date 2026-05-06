@@ -60,7 +60,6 @@ export default function CheckoutForm() {
   });
   const [erros, setErros]   = useState<Partial<DadosCheckout>>({});
   const [erroGeral, setErroGeral] = useState('');
-  const [enviando, setEnviando] = useState(false);
 
   function atualizar(campo: keyof DadosCheckout, valor: string) {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -84,19 +83,16 @@ export default function CheckoutForm() {
 
     if (!validar()) return;
 
-    setEnviando(true);
     const nomeLoja = process.env.NEXT_PUBLIC_NOME_LOJA ?? 'Quero Tudo';
     const { url, erro } = montarMensagem(itens, dados, nomeLoja);
 
     if (erro) {
       setErroGeral(erro);
-      setEnviando(false);
       return;
     }
 
     limpar();
     window.open(url, '_blank');
-    setEnviando(false);
   }
 
   // Skeleton de hidratação
@@ -233,8 +229,7 @@ export default function CheckoutForm() {
 
         <button
           type="submit"
-          disabled={enviando}
-          className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 active:scale-[0.98] disabled:opacity-60 text-white font-black py-4 rounded-xl transition-all text-base shadow-sm shadow-green-200"
+          className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 active:scale-[0.98] text-white font-black py-4 rounded-xl transition-all text-base shadow-sm shadow-green-200"
         >
           {/* Ícone WhatsApp */}
           <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0" xmlns="http://www.w3.org/2000/svg">

@@ -11,7 +11,7 @@ export default function CategoryTabs({ categorias, ativa, contagens, onChange }:
   const todas = ['Todos', ...categorias];
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ touchAction: 'pan-x' }}>
       {todas.map((cat) => {
         const isAtiva = ativa === cat;
         const count = contagens?.[cat];

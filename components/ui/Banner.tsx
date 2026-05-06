@@ -62,7 +62,7 @@ export default function Banner({ destaques }: Props) {
 
         {/* Destaques */}
         {destaques.length > 0 && (
-          <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide flex-shrink-0 max-w-full md:max-w-xs">
+          <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide flex-shrink-0 max-w-full md:max-w-xs" style={{ touchAction: 'pan-x' }}>
             {destaques.slice(0, 4).map((p) => (
               <Link
                 key={p.id}

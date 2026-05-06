@@ -1,10 +1,27 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Permite acesso via localhost e IPs de rede local (necessário p/ testar do celular via Wi-Fi).
+  // Sem isso o Next dev server bloqueia chunks/HMR do IP de rede e a hidratação falha silenciosamente,
+  // deixando botões visíveis mas sem event handlers.
+  allowedDevOrigins: [
+    'localhost',
+    '127.0.0.1',
+    '192.168.*.*',
+    '10.*.*.*',
+    '172.16.*.*',
+    '172.17.*.*',
+    '172.18.*.*',
+    '172.19.*.*',
+    '172.2*.*.*',
+    '172.30.*.*',
+    '172.31.*.*',
+  ],
+
   // Remove header X-Powered-By: Next.js — não precisa anunciar o stack
   poweredByHeader: false,
 
-  // strict mode detecta efeitos colaterais duplos em dev (boa prática)
+  // Strict mode detecta efeitos colaterais duplos em dev (boa prática)
   reactStrictMode: true,
 
   // Permite <img> apontando para o Cloudinary sem next/image

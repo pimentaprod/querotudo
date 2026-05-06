@@ -29,7 +29,7 @@ export default function WhatsAppButton() {
       {/* Botão com anel de pulso */}
       <div className="relative">
         {/* Anel animado — chama atenção sem ser intrusivo */}
-        <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-30" />
+        <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-30 pointer-events-none" />
         <div className="relative w-14 h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg shadow-green-900/30 transition-all duration-150">
           <svg
             viewBox="0 0 24 24"
