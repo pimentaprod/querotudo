@@ -5,7 +5,7 @@ import { useCart, useCartHydrated } from '@/lib/cart';
 
 export default function CartIcon() {
   const hydrated  = useCartHydrated();
-  const quantidade = useCart((s) => s.quantidadeItens)();
+  const quantidade = useCart((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
 
   return (
     <Link

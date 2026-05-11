@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCart, useCartHydrated } from '@/lib/cart';
-import { montarMensagem } from '@/lib/whatsapp';
+import { montarMensagem, OpcaoFrete } from '@/lib/whatsapp';
 import { DadosCheckout } from '@/lib/types';
 import { cloudinaryUrl } from '@/lib/cloudinary-url';
 
@@ -61,9 +61,57 @@ export default function CheckoutForm() {
   const [erros, setErros]   = useState<Partial<DadosCheckout>>({});
   const [erroGeral, setErroGeral] = useState('');
 
+  const [opcoesFrete, setOpcoesFrete]     = useState<OpcaoFrete[]>([]);
+  const [freteCarregando, setFreteCarregando] = useState(false);
+  const [erroFrete, setErroFrete]         = useState('');
+  const [freteSelecionado, setFreteSelecionado] = useState<OpcaoFrete | null>(null);
+
   function atualizar(campo: keyof DadosCheckout, valor: string) {
     setDados((prev) => ({ ...prev, [campo]: valor }));
     if (erros[campo]) setErros((prev) => ({ ...prev, [campo]: '' }));
+    // Reseta frete ao trocar o CEP
+    if (campo === 'cep') {
+      setOpcoesFrete([]);
+      setFreteSelecionado(null);
+      setErroFrete('');
+    }
+  }
+
+  async function calcularFrete() {
+    const cepLimpo = dados.cep.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) return;
+
+    setFreteCarregando(true);
+    setErroFrete('');
+    setOpcoesFrete([]);
+    setFreteSelecionado(null);
+
+    try {
+      const res = await fetch('/api/frete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cepDestino: cepLimpo, itens }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErroFrete(data.error ?? 'Erro ao calcular frete.');
+        return;
+      }
+
+      if (!data.length) {
+        setErroFrete('Nenhuma opção de frete disponível para este CEP.');
+        return;
+      }
+
+      setOpcoesFrete(data);
+      setFreteSelecionado(data[0]);
+    } catch {
+      setErroFrete('Não foi possível conectar ao serviço de frete.');
+    } finally {
+      setFreteCarregando(false);
+    }
   }
 
   function validar(): boolean {
@@ -84,7 +132,7 @@ export default function CheckoutForm() {
     if (!validar()) return;
 
     const nomeLoja = process.env.NEXT_PUBLIC_NOME_LOJA ?? 'Quero Tudo';
-    const { url, erro } = montarMensagem(itens, dados, nomeLoja);
+    const { url, erro } = montarMensagem(itens, dados, nomeLoja, freteSelecionado ?? undefined);
 
     if (erro) {
       setErroGeral(erro);
@@ -182,15 +230,63 @@ export default function CheckoutForm() {
           </Campo>
 
           <Campo label="CEP" obrigatorio erro={erros.cep}>
-            <input
-              type="text"
-              value={dados.cep}
-              onChange={(e) => atualizar('cep', mascaraCep(e.target.value))}
-              placeholder="00000-000"
-              autoComplete="postal-code"
-              inputMode="numeric"
-              className={`${inputCls} max-w-[160px]`}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={dados.cep}
+                onChange={(e) => atualizar('cep', mascaraCep(e.target.value))}
+                placeholder="00000-000"
+                autoComplete="postal-code"
+                inputMode="numeric"
+                className={`${inputCls} max-w-[160px]`}
+              />
+              <button
+                type="button"
+                onClick={calcularFrete}
+                disabled={dados.cep.replace(/\D/g, '').length !== 8 || freteCarregando}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
+              >
+                {freteCarregando ? 'Calculando...' : 'Calcular frete'}
+              </button>
+            </div>
+
+            {erroFrete && (
+              <p className="text-red-500 text-xs mt-2">{erroFrete}</p>
+            )}
+
+            {opcoesFrete.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {opcoesFrete.map((opcao) => (
+                  <label
+                    key={opcao.id}
+                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border cursor-pointer transition ${
+                      freteSelecionado?.id === opcao.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="frete"
+                        checked={freteSelecionado?.id === opcao.id}
+                        onChange={() => setFreteSelecionado(opcao)}
+                        className="accent-blue-600"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {opcao.company.name} {opcao.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{opcao.delivery_time} dias úteis</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-black text-blue-700 flex-shrink-0">
+                      R$ {parseFloat(opcao.price).toFixed(2).replace('.', ',')}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </Campo>
         </fieldset>
 
@@ -273,11 +369,27 @@ export default function CheckoutForm() {
             ))}
           </ul>
 
-          <div className="border-t pt-4 flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Total</span>
-            <span className="font-black text-blue-700 text-lg">
-              R$ {total().toFixed(2).replace('.', ',')}
-            </span>
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500">Subtotal</span>
+              <span className="font-semibold text-gray-700">
+                R$ {total().toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500">Frete</span>
+              <span className={`font-semibold ${freteSelecionado ? 'text-gray-700' : 'text-gray-300'}`}>
+                {freteSelecionado
+                  ? `R$ ${parseFloat(freteSelecionado.price).toFixed(2).replace('.', ',')}`
+                  : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t">
+              <span className="font-semibold text-gray-700">Total</span>
+              <span className="font-black text-blue-700 text-lg">
+                R$ {(total() + (freteSelecionado ? parseFloat(freteSelecionado.price) : 0)).toFixed(2).replace('.', ',')}
+              </span>
+            </div>
           </div>
 
           <Link

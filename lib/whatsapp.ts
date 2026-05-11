@@ -6,6 +6,14 @@ export const LIMITE_ITENS = 20;
 // Limite prático de caracteres na URL do WhatsApp (após encodeURIComponent)
 const LIMITE_URL = 2000;
 
+export interface OpcaoFrete {
+  id: number;
+  name: string;
+  price: string;
+  delivery_time: number;
+  company: { name: string };
+}
+
 function removerAcentos(str: string): string {
   return str.normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
@@ -22,7 +30,8 @@ function limparTelefone(tel: string): string {
 export function montarMensagem(
   itens: ItemCarrinho[],
   dados: DadosCheckout,
-  nomeLoja: string
+  nomeLoja: string,
+  frete?: OpcaoFrete
 ): { url: string; erro?: string } {
   if (itens.length === 0) {
     return { url: '', erro: 'Seu carrinho está vazio.' };
@@ -50,7 +59,9 @@ export function montarMensagem(
     })
     .join('\n');
 
-  const total = itens.reduce((acc, i) => acc + i.produto.preco * i.quantidade, 0);
+  const subtotal = itens.reduce((acc, i) => acc + i.produto.preco * i.quantidade, 0);
+  const valorFrete = frete ? parseFloat(frete.price) : 0;
+  const total = subtotal + valorFrete;
 
   const partes = [
     `PEDIDO - ${loja}`,
@@ -64,10 +75,16 @@ export function montarMensagem(
     'ITENS',
     linhasItens,
     '',
-    `TOTAL: R$ ${formatarPreco(total)}`,
-    '',
-    `Pagamento: ${pagamento}`,
+    `Subtotal: R$ ${formatarPreco(subtotal)}`,
   ];
+
+  if (frete) {
+    const nomeFrete = removerAcentos(`${frete.company.name} ${frete.name}`);
+    partes.push(`Frete (${nomeFrete}): R$ ${formatarPreco(valorFrete)}`);
+    partes.push(`Prazo: ${frete.delivery_time} dias uteis`);
+  }
+
+  partes.push(`TOTAL: R$ ${formatarPreco(total)}`, '', `Pagamento: ${pagamento}`);
 
   // Adiciona observações só quando preenchidas
   if (obs) partes.push(`Observacoes: ${obs}`);
