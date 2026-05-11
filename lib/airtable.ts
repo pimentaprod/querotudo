@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { Produto } from '@/lib/types';
 import { sincronizarImagem } from '@/lib/cloudinary';
 import { PRODUTOS_MOCK } from '@/lib/mocks';
@@ -86,7 +87,7 @@ export async function getProdutos(): Promise<Produto[]> {
   return produtos;
 }
 
-export async function getProdutoPorId(id: string): Promise<Produto | null> {
+export const getProdutoPorId = cache(async function getProdutoPorId(id: string): Promise<Produto | null> {
   if (modoMock) {
     return PRODUTOS_MOCK.find((p) => p.id === id) ?? null;
   }
@@ -110,4 +111,4 @@ export async function getProdutoPorId(id: string): Promise<Produto | null> {
   } catch {
     return null;
   }
-}
+});
