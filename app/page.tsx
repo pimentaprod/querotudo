@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getProdutos } from '@/lib/airtable';
 import Banner from '@/components/ui/Banner';
+import FreteGratis from '@/components/ui/FreteGratis';
 import CatalogSection from '@/components/produto/CatalogSection';
 import PromoSection from '@/components/produto/PromoSection';
 
@@ -24,6 +25,7 @@ export default async function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <Banner destaques={destaques} />
+      <FreteGratis />
       <PromoSection produtos={promocoes} />
       <section id="produtos">
         <CatalogSection produtos={produtos} />

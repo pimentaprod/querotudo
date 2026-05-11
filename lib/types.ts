@@ -9,6 +9,10 @@ export interface Produto {
   ativo: boolean;
   destaque: boolean;
   promocao: boolean;
+  peso: number;       // kg
+  altura: number;     // cm
+  largura: number;    // cm
+  comprimento: number; // cm
 }
 
 export interface ItemCarrinho {

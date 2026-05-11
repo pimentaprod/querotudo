@@ -20,6 +20,11 @@ interface AirtableRecord {
     Foto?: { url: string }[];
     Disponibilidade?: string;
     Promoção?: string;
+    Categoria?: string;
+    Peso?: number;
+    Altura?: number;
+    Largura?: number;
+    Comprimento?: number;
   };
 }
 
@@ -45,12 +50,16 @@ function mapRecord(r: AirtableRecord, imagens: string[]): Produto {
     nome: r.fields.Nome ?? '',
     descricao: r.fields.Descrição ?? '',
     preco: r.fields.Preço ?? 0,
-    categoria: 'Geral',
+    categoria: r.fields.Categoria ?? 'Geral',
     imagens,
     estoque: disponivel ? 99 : 0,
     ativo: disponivel,
     destaque: false,
     promocao: r.fields.Promoção === 'sim',
+    peso: r.fields.Peso ?? 0,
+    altura: r.fields.Altura ?? 0,
+    largura: r.fields.Largura ?? 0,
+    comprimento: r.fields.Comprimento ?? 0,
   };
 }
 
