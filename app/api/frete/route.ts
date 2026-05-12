@@ -30,6 +30,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Produtos sem dimensões cadastradas' }, { status: 422 });
   }
 
+  // CEPs com frete grátis (entrega em 1 dia útil)
+  const CEPS_FRETE_GRATIS = new Set(['48970000', '44775000', '48850000']);
+  if (CEPS_FRETE_GRATIS.has(cep)) {
+    return NextResponse.json([
+      {
+        id: 'frete-gratis',
+        name: 'Entrega Grátis',
+        price: '0.00',
+        custom_price: '0.00',
+        discount: '0.00',
+        currency: 'R$',
+        delivery_time: 1,
+        delivery_range: { min: 1, max: 1 },
+        company: { id: 0, name: 'Quero Tudo', picture: '' },
+      },
+    ]);
+  }
+
   const token = await getAccessToken();
 
   const res = await fetch(`${MELHOR_ENVIO_URL}/api/v2/me/shipment/calculate`, {
