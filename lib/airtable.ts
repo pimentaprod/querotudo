@@ -36,7 +36,7 @@ async function fetchPagina(
 
   const res = await fetch(`${API_URL}?${params}`, {
     headers: { Authorization: `Bearer ${PAT}` },
-    next: { revalidate: 60 },
+    next: { revalidate: 600 },
   });
 
   if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
@@ -63,7 +63,7 @@ function mapRecord(r: AirtableRecord, imagens: string[]): Produto {
   };
 }
 
-export async function getProdutos(): Promise<Produto[]> {
+export const getProdutos = cache(async function getProdutos(): Promise<Produto[]> {
   if (modoMock) return PRODUTOS_MOCK;
 
   const todos: AirtableRecord[] = [];
@@ -94,30 +94,12 @@ export async function getProdutos(): Promise<Produto[]> {
   );
 
   return produtos;
-}
+});
 
+// Reaproveita a lista de getProdutos() (uma única chamada à API, com fallback
+// para mocks) em vez de buscar o registro por ID — evita 404 quando a home
+// está em contingência e reduz o consumo da API do Airtable.
 export const getProdutoPorId = cache(async function getProdutoPorId(id: string): Promise<Produto | null> {
-  if (modoMock) {
-    return PRODUTOS_MOCK.find((p) => p.id === id) ?? null;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/${id}`, {
-      headers: { Authorization: `Bearer ${PAT}` },
-      next: { revalidate: 60 },
-    });
-
-    if (!res.ok) return null;
-    const r: AirtableRecord = await res.json();
-
-    const imagens = await Promise.all(
-      (r.fields.Foto ?? []).slice(0, 4).map((img) =>
-        sincronizarImagem(img.url, r.id)
-      )
-    );
-
-    return mapRecord(r, imagens);
-  } catch {
-    return null;
-  }
+  const produtos = await getProdutos();
+  return produtos.find((p) => p.id === id) ?? null;
 });

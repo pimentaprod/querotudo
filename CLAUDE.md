@@ -113,10 +113,10 @@ A URL do WhatsApp tem limite prático de ~2.000 caracteres após URL encoding. C
 - Remover acentos e caracteres decorativos reduz em ~40% o tamanho da URL.
 - Garante compatibilidade com todos os clientes WhatsApp (web, mobile, desktop).
 
-### Por que ISR de 60s em vez de SSR ou SSG puro?
+### Por que ISR de 600s em vez de SSR ou SSG puro?
 - **SSR puro:** chama a Airtable a cada request → lento e pode atingir rate limit.
 - **SSG puro:** exige rebuild no deploy para cada atualização de produto.
-- **ISR 60s:** combina o melhor dos dois — resposta rápida (cache) e atualização frequente sem rebuild. O webhook `POST /api/revalidate` permite invalidação imediata quando necessário.
+- **ISR 600s:** combina o melhor dos dois — resposta rápida (cache) e atualização sem rebuild. A janela de 10 min (era 60s) reduz o consumo da cota mensal de API do Airtable, que no plano Free é baixa. O webhook `POST /api/revalidate` permite invalidação imediata quando necessário.
 
 ### Por que `cloudinaryUrl` em `lib/cloudinary-url.ts` separado?
 O SDK do Cloudinary (`lib/cloudinary.ts`) usa `fs` do Node.js e não pode ser importado em Client Components. O helper puro de URL não tem dependências Node.js e pode ser usado em qualquer contexto.
@@ -218,7 +218,7 @@ const response = await fetch('https://SEU-DOMINIO.vercel.app/api/revalidate', {
 console.log(await response.json());
 ```
 
-> Sem esse webhook o ISR de 60s já mantém o site razoavelmente atualizado.
+> Sem esse webhook o ISR de 600s já mantém o site razoavelmente atualizado.
 
 ---
 
